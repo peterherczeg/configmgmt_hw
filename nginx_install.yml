@@ -1,0 +1,41 @@
+---
+- name: Install nginx and deploy site from git
+  hosts: all
+  become: true
+
+  vars:
+    repo_url: "https://github.com/peterherczeg/configmgmt_hw.git"
+    web_root: "/usr/share/nginx/html"
+
+  tasks:
+
+    - name: Install git
+      ansible.builtin.dnf:
+        name: git
+        state: present
+
+    - name: Install nginx
+      ansible.builtin.dnf:
+        name: nginx
+        state: present
+
+    - name: Enable and start nginx
+      ansible.builtin.systemd:
+        name: nginx
+        enabled: true
+        state: started
+
+    - name: Deploy site directly into nginx web root
+      ansible.builtin.git:
+        repo: "{{ repo_url }}"
+        dest: "{{ web_root }}"
+        version: main
+        force: yes
+      notify: Reload nginx
+
+  handlers:
+    - name: Reload nginx
+      ansible.builtin.systemd:
+        name: nginx
+        state: reloaded
+
